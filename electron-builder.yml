@@ -1,0 +1,68 @@
+appId: com.xuebadi.claw
+productName: 学霸帝Claw
+copyright: Copyright © 2025 xuebadi
+
+icon: build/icon.icns
+directories:
+  buildResources: build
+  output: dist
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{*.md,*.yaml}'
+asarUnpack:
+  - resources/**
+
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    - NSCameraUsageDescription: 学霸帝Claw 需要摄像头权限来识别屏幕内容
+    - NSMicrophoneUsageDescription: 学霸帝Claw 需要麦克风权限来进行语音输入
+    - NSScreenCaptureUsageDescription: 学霸帝Claw 需要屏幕录制权限来截取屏幕并进行自动化操作
+    - NSAppleEventsUsageDescription: 学霸帝Claw 需要自动化权限来控制其他应用
+  notarize: false
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+dmg:
+  title: 学霸帝Claw
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+fileAssociations:
+  - ext: xclaw
+    name: 学霸帝Claw任务文件
+    description: 学霸帝Claw 任务配置文件
+    role: Editor
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+linux:
+  target:
+    - AppImage
+  maintainer: xuebadi
+  category: Utility
+appImage:
+  artifactName: ${productName}-${version}.${ext}
+publish:
+  provider: generic
+  url: https://github.com/xuebadi/xueba-tars-desktop/releases

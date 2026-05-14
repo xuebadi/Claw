@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+build/icon.iconset/
+build/学霸帝Claw.app/
+.DS_Store
+*.log
+resources/bin/
+resources/lib/
+resources/ocr-helper/
