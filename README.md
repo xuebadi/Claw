@@ -1,4 +1,4 @@
-# 学霸帝Claw - local ai agent
+# 🦞学霸帝Claw - local ai agent
 
 基于 ByteDance UI-TARS 的智能桌面助手 macOS 应用。
 
