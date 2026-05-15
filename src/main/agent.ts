@@ -35,7 +35,7 @@ export async function initAgent(): Promise<void> {
         headers: {
           'Authorization': `Bearer ${settings.apiKey || ''}`
         },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(15000)
       })
       
       if (response.ok) {
@@ -131,7 +131,7 @@ export async function sendToAgent(
           max_tokens: 4096,
           stream: false
         }),
-        signal: AbortSignal.timeout(120000) // 2 min timeout
+        signal: AbortSignal.timeout(300000) // 5 min timeout (CPU-only inference is slow)
       })
       
       if (!response.ok) {
