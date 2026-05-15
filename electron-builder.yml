@@ -13,6 +13,11 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - '!{*.md,*.yaml}'
+  - '!**/node_modules/*'
+  - '!**/MNN-source/*'
+  - '!**/MNN-build/*'
+  - '!**/model-server/*'
+  - '!**/mnn_gitee.zip'
 asarUnpack:
   - resources/**
 
@@ -29,7 +34,6 @@ mac:
     - target: dmg
       arch:
         - x64
-        - arm64
 dmg:
   title: 学霸帝Claw
   artifactName: ${productName}-${version}-${arch}.${ext}
@@ -50,7 +54,6 @@ win:
     - target: nsis
       arch:
         - x64
-  artifactName: ${productName}-${version}-${arch}.${ext}
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
