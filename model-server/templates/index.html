@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学霸帝Claw 模型服务器</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🧠</span>
+                <h1>学霸帝Claw 模型服务器</h1>
+            </div>
+            <div class="version">v1.0.0</div>
+        </header>
+
+        <!-- 状态卡片 -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-item">
+                <span class="label">服务器状态</span>
+                <span class="value status-online" id="serverStatus">● 运行中</span>
+            </div>
+            <div class="status-item">
+                <span class="label">模型状态</span>
+                <span class="value status-offline" id="modelStatus">● 未加载</span>
+            </div>
+            <div class="status-item">
+                <span class="label">运行时间</span>
+                <span class="value" id="uptime">00:00:00</span>
+            </div>
+            <div class="status-item">
+                <span class="label">请求次数</span>
+                <span class="value" id="requestCount">0</span>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-grid">
+            <!-- 左侧：模型管理 -->
+            <section class="card model-card">
+                <h2>📦 模型管理</h2>
+                
+                <div class="form-group">
+                    <label>选择模型</label>
+                    <select id="modelSelect" onchange="onModelChange()">
+                        <optgroup label="GGUF (llama.cpp · CPU 快速推理)">
+                            <option value="gguf:UI-TARS-1.5-7B-q5_k_m" selected>UI-TARS-1.5-7B Q5_K_M (5.5GB, ModelScope ✅)</option>
+                            <option value="gguf:UI-TARS-1.5-7B-q4_k_m">UI-TARS-1.5-7B Q4_K_M (4.8GB, ModelScope ✅)</option>
+                            <option value="gguf:UI-TARS-1.5-7B-q8_0">UI-TARS-1.5-7B Q8_0 (8.1GB, ModelScope ✅)</option>
+                        </optgroup>
+                        <optgroup label="Transformers (PyTorch · 较慢)">
+                            <option value="transformers:Qwen/Qwen2.5-VL-7B-Instruct">Qwen2.5-VL-7B (ModelScope ✅)</option>
+                            <option value="transformers:OpenGVLab/InternVL2-8B">InternVL2-8B (ModelScope ✅)</option>
+                            <option value="transformers:ByteDance-Seed/UI-TARS-1.5-7B">UI-TARS-1.5-7B (需手动下载)</option>
+                        </optgroup>
+                    </select>
+                    <small class="hint" id="modelHint">GGUF 模式用 llama.cpp 推理，CPU 速度快 5-10 倍</small>
+                </div>
+
+                <div class="form-group">
+                    <label>本地路径（可选）</label>
+                    <input type="text" id="modelPath" placeholder="留空则自动从 ModelScope 下载">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>设备</label>
+                        <select id="deviceSelect">
+                            <option value="auto">自动检测</option>
+                            <option value="mps">Apple Silicon (MPS)</option>
+                            <option value="cuda">NVIDIA GPU (CUDA)</option>
+                            <option value="cpu">CPU (最慢)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>量化</label>
+                        <select id="quantSelect">
+                            <option value="none">无量化 (FP16)</option>
+                            <option value="8bit">8-bit 量化</option>
+                            <option value="4bit">4-bit 量化</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="loadBtn" onclick="loadModel()">
+                        ⬇️ 加载模型
+                    </button>
+                    <button class="btn btn-danger" id="unloadBtn" onclick="unloadModel()" disabled>
+                        🗑️ 卸载模型
+                    </button>
+                </div>
+
+                <!-- 加载进度 -->
+                <div class="progress-container" id="progressContainer" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">准备中...</p>
+                </div>
+
+                <!-- 模型信息 -->
+                <div class="model-info" id="modelInfo" style="display:none;">
+                    <h3>模型信息</h3>
+                    <table class="info-table">
+                        <tr><td>名称</td><td id="infoName">-</td></tr>
+                        <tr><td>设备</td><td id="infoDevice">-</td></tr>
+                        <tr><td>精度</td><td id="infoDtype">-</td></tr>
+                        <tr><td>加载时间</td><td id="infoLoadTime">-</td></tr>
+                        <tr><td>内存占用</td><td id="infoMemory">-</td></tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 右侧：API 测试 -->
+            <section class="card test-card">
+                <h2>🧪 API 测试</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('chat')">对话测试</button>
+                    <button class="tab" onclick="switchTab('api')">API 文档</button>
+                </div>
+
+                <!-- 对话测试 -->
+                <div class="tab-content" id="chatTab">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="system-msg">
+                            欢迎使用学霸帝Claw 模型服务器！加载模型后即可开始对话。
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <textarea 
+                            id="userInput" 
+                            placeholder="输入消息...（支持 Markdown 格式）"
+                            rows="3"
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                        <div class="input-actions">
+                            <button class="btn btn-small" onclick="clearChat()">清空</button>
+                            <button class="btn btn-primary btn-small" onclick="sendMessage()" id="sendBtn">
+                                发送
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API 文档 -->
+                <div class="tab-content" id="apiTab" style="display:none;">
+                    <div class="api-docs">
+                        <h3>OpenAI 兼容接口</h3>
+                        
+                        <div class="api-endpoint">
+                            <h4>POST /v1/chat/completions</h4>
+                            <pre>{
+  "model": "ui-tars-1.5-7b",
+  "messages": [
+    {"role": "user", "content": "你好"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 2048,
+  "stream": false
+}</pre>
+                        </div>
+
+                        <div class="api-endpoint">
+                            <h4>GET /api/status</h4>
+                            <p>获取服务器和模型状态</p>
+                        </div>
+
+                        <div class="api-endpoint">
+                            <h4>POST /api/model/load</h4>
+                            <pre>{
+  "model_name": "ByteDance-Seed/UI-TARS-1.5-7B",
+  "device": "auto"
+}</pre>
+                        </div>
+
+                        <div class="curl-example">
+                            <h4>cURL 示例</h4>
+                            <pre>curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"ui-tars-1.5-7b","messages":[{"role":"user","content":"你好"}]}'</pre>
+                        </div>
+
+                        <div class="endpoint-list">
+                            <h4>桌面应用配置</h4>
+                            <div class="config-box">
+                                <code>API 地址: http://localhost:8000/v1</code>
+                                <code>模型名称: ui-tars-1.5-7b</code>
+                                <code>API Key: （留空）</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 底部日志 -->
+        <section class="card log-card">
+            <h2>📋 服务器日志</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry info">[系统] 服务器已启动，等待操作...</div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
